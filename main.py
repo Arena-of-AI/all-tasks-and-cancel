@@ -30,7 +30,8 @@ if st.button("List all jobs"):
 
         table_data.append([created_at_formatted, fine_tuned_model, model, status])
 
-    st.table(table_data)
+    st.table(table_data, columns=["Created at", "Fine-Tuned Model", "Model", "Status"])
+
 
 # 处理"Cancel job"按钮的点击事件
 cancel_job_id = st.text_input("Enter the job ID to cancel")

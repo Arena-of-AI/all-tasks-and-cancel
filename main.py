@@ -22,7 +22,7 @@ def list_all_jobs():
             status = item["status"]
             table_data.append((created_at, fine_tuned_model, model, status))
 
-        st.table(table_data, headers=["Created At", "Fine-Tuned Model", "Model", "Status"])
+        st.table(table_data)
     except openai.error.AuthenticationError as e:
         st.error(str(e))
 

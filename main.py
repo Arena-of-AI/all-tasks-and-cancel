@@ -14,13 +14,11 @@ def list_all_jobs():
         response = openai.FineTune.list()
         data = response["data"]
 
-        table_data = []
-        for item in data:
-            "created_at" = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
-            "fine_tuned_model" = item["fine_tuned_model"]
-            "model" = item["model"]
-            "status" = item["status"]
-          
+        table_data = [
+            "Created at": datetime.fromtimestamp(model["created"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "Model Name (ID)": model["id"],
+            "Parent Model": model["parent"]
+        ]              
         st.table(table_data)
     except openai.error.AuthenticationError as e:
         st.error(str(e))

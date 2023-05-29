@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+from datetime import datetime
 
 # 设置 OpenAI API 密钥输入框
 api_key = st.text_input("Enter your OpenAI API key")
@@ -14,18 +15,22 @@ def list_all_jobs():
 
     table_data = []
     for item in data:
-        created_at = item["created_at"]
+        created_at = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
         fine_tuned_model = item["fine_tuned_model"]
         model = item["model"]
         status = item["status"]
         table_data.append((created_at, fine_tuned_model, model, status))
 
-    st.table(table_data)
+    st.table(table_data, headers=["Created At", "Fine-Tuned Model", "Model", "Status"])
 
 # 取消 FineTune 作业
 def cancel_job(job_id):
-    openai.FineTune.cancel(id=job_id)
-    st.success(f"Job with ID {job_id} has been canceled.")
+    response = openai.FineTune.cancel(id=job_id)
+    status = response["status"]
+    if status == "cancelled":
+        st.success("The job is successfully canceled.")
+    else:
+        st.error("Failed to cancel the job.")
 
 # 主应用
 def main():

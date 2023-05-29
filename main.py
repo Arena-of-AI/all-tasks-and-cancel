@@ -16,12 +16,11 @@ def list_all_jobs():
 
         table_data = []
         for item in data:
-            created_at = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
-            fine_tuned_model = item["fine_tuned_model"]
-            model = item["model"]
-            status = item["status"]
-            table_data.append((created_at, fine_tuned_model, model, status))
-
+            "created_at" = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
+            "fine_tuned_model" = item["fine_tuned_model"]
+            "model" = item["model"]
+            "status" = item["status"]
+          
         st.table(table_data)
     except openai.error.AuthenticationError as e:
         st.error(str(e))

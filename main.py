@@ -1,47 +1,64 @@
-import streamlit as st
+import datetime
 import openai
-from datetime import datetime
+import streamlit as st
 
-# 设置OpenAI API密钥的输入框
-api_key = st.text_input("Enter your OpenAI API key")
-
-# 如果API密钥已提供，则进行身份验证
-if api_key:
+# 获取终端输出并显示表格
+def list_fine_tuned_tasks(api_key):
     openai.api_key = api_key
+    terminal_output = openai.FineTune.list()
+    return terminal_output["data"]
+
+# 解析终端输出为表格行列表
+def parse_terminal_output(terminal_output):
+    rows = []
+    for task in terminal_output:
+        hyperparams = task["hyperparams"]
+        training_file = task["training_files"][0]["filename"]
+
+        created_at = datetime.datetime.fromtimestamp(task["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
+
+        row = {
+            "Time": created_at,
+            "Model Name": task["fine_tuned_model"],
+            "Job ID": task["id"],
+            "Parent Model": task["model"],
+            "Status": task["status"],
+            "Batch Size": hyperparams["batch_size"],
+            "Learning Rate Multiplier": hyperparams["learning_rate_multiplier"],
+            "Epochs": hyperparams["n_epochs"],
+            "Prompt Loss Weight": hyperparams["prompt_loss_weight"],
+            "Training File": training_file
+        }
+        rows.append(row)
+
+    return rows
+
+# 取消 Fine-Tune 任务
+def cancel_fine_tune_job(api_key, job_id):
+    openai.api_key = api_key
+    response = openai.FineTune.cancel(id=job_id)
+    return response["status"]
+
+# 读取 API 密钥
+api_key = st.text_input("Enter your OpenAI API key", type="password")
+
+# 当用户提供 API 密钥时，获取终端输出并解析为表格行列表
+if api_key:
+    tasks = list_fine_tuned_tasks(api_key)
+    rows = parse_terminal_output(tasks)
+    st.table(rows)
+
+    # 获取要取消的任务 ID
+    job_id_to_cancel = st.text_input("Enter the Job ID to cancel")
+
+    if st.button("Cancel Job"):
+        if job_id_to_cancel:
+            status = cancel_fine_tune_job(api_key, job_id_to_cancel)
+            if status == "cancelled":
+                st.success("The job is successfully canceled")
+            else:
+                st.error("Failed to cancel the job")
+        else:
+            st.warning("Please enter a valid Job ID")
 else:
     st.warning("Please enter your OpenAI API key.")
-
-# 处理"List all jobs"按钮的点击事件
-if st.button("List all jobs"):
-    # 调用OpenAI FineTune.list()获取所有作业的信息
-    response = openai.FineTune.list()
-
-    # 解析并显示作业信息的简化表格
-    jobs_data = response["data"]
-    table_data = []
-    for job in jobs_data:
-        created_at = job["created_at"]
-        fine_tuned_model = job["fine_tuned_model"]
-        model = job["model"]
-        status = job["status"]
-
-        # 将UNIX时间戳转换为可读日期时间格式
-        created_at_formatted = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
-
-        table_data.append([created_at_formatted, fine_tuned_model, model, status])
-
-    st.table(table_data, columns=["Created at", "Fine-Tuned Model", "Model", "Status"])
-
-
-# 处理"Cancel job"按钮的点击事件
-cancel_job_id = st.text_input("Enter the job ID to cancel")
-if st.button("Cancel job") and cancel_job_id:
-    # 调用OpenAI FineTune.cancel()取消指定的作业
-    response = openai.FineTune.cancel(id=cancel_job_id)
-
-    # 检查作业的状态以确定是否成功取消
-    status = response.get("status")
-    if status == "cancelled":
-        st.success("The job is successfully canceled")
-    else:
-        st.error("Failed to cancel the job")

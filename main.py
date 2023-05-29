@@ -36,8 +36,13 @@ def parse_terminal_output(terminal_output):
 # 取消 Fine-Tune 任务
 def cancel_fine_tune_job(api_key, job_id):
     openai.api_key = api_key
-    response = openai.FineTune.cancel(id=job_id)
-    return response["status"]
+    try:
+        openai.FineTune.retrieve(id=job_id)
+    except openai.error.InvalidRequestError:
+        return "invalid"
+    else:
+        response = openai.FineTune.cancel(id=job_id)
+        return response["status"]
 
 # 读取 API 密钥
 api_key = st.text_input("Enter your OpenAI API key", type="password")
@@ -56,6 +61,8 @@ if api_key:
             status = cancel_fine_tune_job(api_key, job_id_to_cancel)
             if status == "cancelled":
                 st.success("The job is successfully canceled")
+            elif status == "invalid":
+                st.error("Invalid Job ID. Please enter a valid Job ID.")
             else:
                 st.error("Failed to cancel the job")
         else:

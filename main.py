@@ -1,50 +1,45 @@
 import streamlit as st
 import openai
-from datetime import datetime
 
-# 设置 OpenAI API 密钥输入框
+# 设置OpenAI API密钥的输入框
 api_key = st.text_input("Enter your OpenAI API key")
 
-# 初始化 OpenAI
-openai.api_key = api_key
+# 如果API密钥已提供，则进行身份验证
+if api_key:
+    openai.api_key = api_key
+else:
+    st.warning("Please enter your OpenAI API key.")
 
-# 列出所有 FineTune 作业
-def list_all_jobs():
+# 处理"List all jobs"按钮的点击事件
+if st.button("List all jobs"):
+    # 调用OpenAI FineTune.list()获取所有作业的信息
     response = openai.FineTune.list()
-    data = response["data"]
 
+    # 解析并显示作业信息的简化表格
+    jobs_data = response["data"]
     table_data = []
-    for item in data:
-        created_at = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
-        fine_tuned_model = item["fine_tuned_model"]
-        model = item["model"]
-        status = item["status"]
-        table_data.append([created_at, fine_tuned_model, model, status])
+    for job in jobs_data:
+        created_at = job["created_at"]
+        fine_tuned_model = job["fine_tuned_model"]
+        model = job["model"]
+        status = job["status"]
+
+        # 将UNIX时间戳转换为可读日期时间格式
+        created_at_formatted = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M:%S")
+
+        table_data.append([created_at_formatted, fine_tuned_model, model, status])
 
     st.table(table_data)
 
-# 取消 FineTune 作业
-def cancel_job(job_id):
-    response = openai.FineTune.cancel(id=job_id)
-    status = response["status"]
+# 处理"Cancel job"按钮的点击事件
+cancel_job_id = st.text_input("Enter the job ID to cancel")
+if st.button("Cancel job") and cancel_job_id:
+    # 调用OpenAI FineTune.cancel()取消指定的作业
+    response = openai.FineTune.cancel(id=cancel_job_id)
+
+    # 检查作业的状态以确定是否成功取消
+    status = response.get("status")
     if status == "cancelled":
-        st.success("The job is successfully canceled.")
+        st.success("The job is successfully canceled")
     else:
-        st.error("Failed to cancel the job.")
-
-# 主应用
-def main():
-    st.title("OpenAI Fine-Tune Jobs")
-
-    # 显示列表按钮
-    if st.button("List All Jobs"):
-        list_all_jobs()
-
-    # 取消作业输入框和按钮
-    cancel_job_id = st.text_input("Enter the Job ID to cancel")
-    if st.button("Cancel Job") and cancel_job_id:
-        cancel_job(cancel_job_id)
-
-# 运行主应用
-if __name__ == "__main__":
-    main()
+        st.error("Failed to cancel the job")

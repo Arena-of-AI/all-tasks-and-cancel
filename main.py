@@ -10,31 +10,33 @@ openai.api_key = api_key
 
 # 列出所有 FineTune 作业
 def list_all_jobs():
-    response = openai.FineTune.list()
-    data = response["data"]
+    try:
+        response = openai.FineTune.list()
+        data = response["data"]
 
-    table_data = []
-    for item in data:
-        created_at = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
-        fine_tuned_model = item["fine_tuned_model"]
-        model = item["model"]
-        status = item["status"]
-        table_data.append([created_at, fine_tuned_model, model, status])
+        table_data = []
+        for item in data:
+            created_at = datetime.fromtimestamp(item["created_at"]).strftime("%Y-%m-%d %H:%M:%S")
+            fine_tuned_model = item["fine_tuned_model"]
+            model = item["model"]
+            status = item["status"]
+            table_data.append((created_at, fine_tuned_model, model, status))
 
-    # 添加表头
-    headers = ["Created At", "Fine-Tuned Model", "Model", "Status"]
-    table_data.insert(0, headers)
-
-    st.table(table_data)
+        st.table(table_data, headers=["Created At", "Fine-Tuned Model", "Model", "Status"])
+    except openai.error.AuthenticationError as e:
+        st.error(str(e))
 
 # 取消 FineTune 作业
 def cancel_job(job_id):
-    response = openai.FineTune.cancel(id=job_id)
-    status = response["status"]
-    if status == "cancelled":
-        st.success("The job is successfully canceled.")
-    else:
-        st.error("Failed to cancel the job.")
+    try:
+        response = openai.FineTune.cancel(id=job_id)
+        status = response["status"]
+        if status == "cancelled":
+            st.success("The job is successfully canceled.")
+        else:
+            st.error("Failed to cancel the job.")
+    except openai.error.AuthenticationError as e:
+        st.error(str(e))
 
 # 主应用
 def main():

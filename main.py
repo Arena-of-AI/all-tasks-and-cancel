@@ -66,6 +66,6 @@ if api_key:
             else:
                 st.error("Failed to cancel the job")
         else:
-            st.warning("Please enter a valid Job ID")
+            st.warning("Please enter a Job ID")
 else:
     st.warning("Please enter your OpenAI API key.")

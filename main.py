@@ -19,9 +19,13 @@ def list_all_jobs():
         fine_tuned_model = item["fine_tuned_model"]
         model = item["model"]
         status = item["status"]
-        table_data.append((created_at, fine_tuned_model, model, status))
+        table_data.append([created_at, fine_tuned_model, model, status])
 
-    st.table(table_data, headers=["Created At", "Fine-Tuned Model", "Model", "Status"])
+    # 添加表头
+    headers = ["Created At", "Fine-Tuned Model", "Model", "Status"]
+    table_data.insert(0, headers)
+
+    st.table(table_data)
 
 # 取消 FineTune 作业
 def cancel_job(job_id):
